@@ -45,30 +45,22 @@ Stock Prediction
 
     {% if session.permission == "Admin" %}
 
-        {% if accuracy %}
-        <h1 style="text-align: center; color: white; background-color: black;">Model Accuracy</h1>
-            <h2>{{ accuracy }}%</h2>
+        {% if meta_data %}
+            <h1 style="text-align: center; color: white; background-color: black;">Model Specifics</h1>
+            <h2>Model version: {{ meta_data.version }}</h2>
+            <h2>Updated: {{ meta_data.date_modified }}</h2>
+        {% endif %}
+           
+        {% if mse %}
+            <h2>MSE Average: {{ '%0.2f' % (mse)|float }}%</h2>
         {% endif %}
 
-        {% if mse_avg %}
-            <h2>MSE Average: {{ '%0.2f' % (mse_avg)|float }}%</h2>
+        {% if msa %}
+            <h2>MSA Average: {{ msa }}%</h2>
         {% endif %}
 
-        {% if msa_avg %}
-            <h2>MSA Average: {{ '%0.2f' % (msa_avg)|float }}%</h2>
-        {% endif %}
-
-        {% if r2_avg %}
-            <h2>R2 Average: {{ '%0.2f' % (r2_avg)|float }}%</h2>
-        {% endif %}
-
-        {% if model_version %}
-        <h1 style="text-align: center; color: white; background-color: black;">Model Version</h1>
-            <h2>Model Version: {{ model_version }}</h2>
-        {% endif %}
-
-        {% if model_date_modified %}
-            <h2>Model Date Modified: {{ model_date_modified }}</h2>
+        {% if rmse %}
+            <h2>R2 Average: {{ rmse }}%</h2>
         {% endif %}
 
     {% endif %}
