@@ -17,7 +17,7 @@
 import sys
 import json
 import finnhub 
-import mysql.connector
+import mariadb
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -47,36 +47,9 @@ __flask_app_cursor                 = None
 watchlist                          = set()
 
 
-# try:
-#     # Database Settings
-#     # change according to your database settings 
-#     config = {
-#         'host':  'stocksage1.c3ukkiiyeiiz.us-east-1.rds.amazonaws.com',
-#         'port': 3306,
-#         'user': 'admin',
-#         'password': 'Stocksage123',
-#         'database': 'stocksage'
-#     }
-
-
-#     __flask_app_connection = mariadb.connect(**config)
-
-# except mariadb.Error as e:
-#     print(f"Error connecting to MariaDB Platform: {e}")
-#     sys.exit(1)
-
-
 try:
     # Database Settings
-    # Change according to your database settings 
-    # config = {
-    #     'host': 'localhost',
-    #     'port': 3306,
-    #     'user': 'root',
-    #     'password': '1234',
-    #     'database': 'db_am_manager'
-    # }
-
+    # change according to your database settings 
     config = {
         'host':  'stocksage1.c3ukkiiyeiiz.us-east-1.rds.amazonaws.com',
         'port': 3306,
@@ -85,11 +58,12 @@ try:
         'database': 'stocksage'
     }
 
-    __flask_app_connection = mysql.connector.connect(**config)
+    __flask_app_connection = mariadb.connect(**config)
 
-except mysql.connector.Error as e:
-    print(f"Error connecting to MySQL: {e}")
+except mariadb.Error as e:
+    print(f"Error connecting to MariaDB Platform: {e}")
     sys.exit(1)
+
 
 __flask_app_cursor = __flask_app_connection.cursor(dictionary = True)
 
@@ -158,7 +132,7 @@ def add_to_watchlist(symbol):
     username = session.get("name")
 
     __flask_app_cursor.execute(
-            "UPDATE user SET watchlist = %s WHERE username = %s",
+            "UPDATE user SET watchlist = ? WHERE username = ?",
                 (db_watchlist, username)
         )
     __flask_app_connection.commit()
@@ -173,7 +147,7 @@ def remove_from_watchlist(symbol):
     username = session.get("name")
 
     __flask_app_cursor.execute(
-            "UPDATE user SET watchlist = %s WHERE username = %s",
+            "UPDATE user SET watchlist = ? WHERE username = ?",
                 (db_watchlist, username)
         )
     __flask_app_connection.commit()
@@ -326,7 +300,7 @@ def __contact_page():
         input_message = request.form["message"]
 
         __flask_app_cursor.execute(
-            "INSERT INTO enquiries (name,email,message) VALUES (%s, %s, %s)",
+            "INSERT INTO enquiries (name,email,message) VALUES (?, ?, ?)",
                 (input_name, input_email, input_message),
         )
 
@@ -368,7 +342,7 @@ def __page_login():
 
         if valid_user == True:
             __flask_app_cursor.execute(
-                "SELECT password FROM user WHERE username = %s",
+                "SELECT password FROM user WHERE username = ? ",
                 (user,)
             )
 
@@ -377,7 +351,7 @@ def __page_login():
 
                     #//this code block is used to distinguish users with diffeent permissions
                     __flask_app_cursor.execute(
-                        "SELECT permission FROM user WHERE username = %s",
+                        "SELECT permission FROM user WHERE username = ?",
                         (user,)
                     )
                     for permission in __flask_app_cursor.fetchall():
@@ -459,7 +433,7 @@ def __page_register():
 
             if input_password == confirm_password:
                 __flask_app_cursor.execute(
-                    "INSERT INTO user (username,password,email,fullname,permission,riskstatus,agerange) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO user (username,password,email,fullname,permission,riskstatus,agerange) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (input_username, input_password, input_email, input_fullname, "Member", risk_status, age_range),
                 )
 
@@ -511,7 +485,7 @@ def __page_createAdmin():
 
             if input_password == confirm_password:
                 __flask_app_cursor.execute(
-                    "INSERT INTO user (username,password,email,fullname,permission,riskstatus,agerange) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO user (username,password,email,fullname,permission,riskstatus,agerange) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (input_username, input_password, input_email, input_fullname, "Admin", risk_status, age_range),
                 )
 
@@ -536,7 +510,7 @@ def __page_profile():
 
         username = session.get("name")
         __flask_app_cursor.execute(
-                "SELECT * FROM user WHERE username = %s", (username,)
+                "SELECT * FROM user WHERE username = ?", (username,)
             )
         
         user = __flask_app_cursor.fetchone()
@@ -655,7 +629,7 @@ def __page_watchList():
         username = session.get("name")
 
         __flask_app_cursor.execute(
-                "SELECT watchlist FROM user WHERE username = %s ",
+                "SELECT watchlist FROM user WHERE username = ? ",
                 (username,)
             )
      
@@ -861,7 +835,7 @@ def __page_update_profile():
 
                     if request.form['action'] == "update":
                         __flask_app_cursor.execute(
-                            "UPDATE user SET username = %s, password = %s, email = %s, fullname = %s, riskstatus = %s, agerange = %s WHERE userid = %s",
+                            "UPDATE user SET username = ?, password = ?, email = ?, fullname = ?, riskstatus = ?, agerange = ? WHERE userid = ?",
                             (username, password, email, fullname, risk_status, age_range, userid)
                         )
                         __flask_app_connection.commit()
@@ -870,7 +844,7 @@ def __page_update_profile():
                     
                     elif request.form['action'] == "delete":
                         __flask_app_cursor.execute(
-                            "DELETE FROM user WHERE userid = %s", (userid,)
+                            "DELETE FROM user WHERE userid = ?", (userid,)
                         )
                         __flask_app_connection.commit()
 
@@ -925,7 +899,7 @@ def __page_edit():
 
         userid = request.args.get("userid")
         __flask_app_cursor.execute(
-                "SELECT * FROM user WHERE userid = %s", (userid,)
+                "SELECT * FROM user WHERE userid = ?", (userid,)
             )
         
         user = __flask_app_cursor.fetchone()
@@ -943,7 +917,7 @@ def __search_user():
         search_term = request.form.get("searchbar")
         search_pattern = "%"+ search_term +"%"
         __flask_app_cursor.execute(
-                "SELECT * FROM user WHERE username LIKE %s AND permission = 'Member'", (search_pattern,)
+                "SELECT * FROM user WHERE username LIKE ? AND permission = 'Member'", (search_pattern,)
             )
         
         users = __flask_app_cursor.fetchall()
@@ -983,7 +957,7 @@ def __page_logout():
 
 if __name__ == "__main__":
 
-    app.run()
+    app.run(host="0.0.0.0", port=8080)
 
 # ==============================================================================
 # Program Entry Point (End) 
